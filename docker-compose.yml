@@ -17,6 +17,10 @@ volumes:
     name: fba_static
   fba_static_upload:
     name: fba_static_upload
+  fba_mosquitto_data:
+    name: fba_mosquitto_data
+  fba_mosquitto_log:
+    name: fba_mosquitto_log
   fba_rabbitmq:
     name: fba_rabbitmq
   fba_loki_data:
@@ -42,6 +46,7 @@ services:
     depends_on:
       - fba_postgres
       - fba_redis
+      - fba_mosquitto
     volumes:
       - ./deploy/backend/docker-compose/.env.server:/fba/backend/.env
       - fba_static:/fba/backend/app/static
@@ -158,6 +163,22 @@ services:
 #      - fba_static_upload:/www/fba_server/backend/static/upload
 #    networks:
 #      - fba_network
+
+  fba_mosquitto:
+    image: eclipse-mosquitto:latest
+    ports:
+      - "${DOCKER_MAP_MOSQUITTO_PORT:-1883}:1883"
+      - "${DOCKER_MAP_MOSQUITTO_WS_PORT:-9001}:9001"
+    container_name: fba_mosquitto
+    restart: always
+    environment:
+      - TZ=Asia/Shanghai
+    volumes:
+      - ./deploy/mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - fba_mosquitto_data:/mosquitto/data
+      - fba_mosquitto_log:/mosquitto/log
+    networks:
+      - fba_network
 
   fba_rabbitmq:
     hostname: fba_rabbitmq

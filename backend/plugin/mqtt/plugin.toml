@@ -1,0 +1,26 @@
+[plugin]
+summary = "MQTT 物联网设备管理"
+version = "0.1.0"
+description = "基于 MQTT 协议的设备连接、遥测数据采集、指令下发与实时推送"
+author = "wu-clan"
+tags = ["other"]
+database = ["mysql", "postgresql"]
+
+[app]
+router = ["device_router", "telemetry_router", "control_router"]
+
+[settings]
+# --- MQTT Broker ---
+MQTT_HOST = "127.0.0.1"
+MQTT_PORT = 1883
+MQTT_USERNAME = ""
+MQTT_PASSWORD = ""
+MQTT_CLIENT_ID = "fba_mqtt_client"
+MQTT_KEEPALIVE = 60
+MQTT_RECONNECT_DELAY = 5
+MQTT_MAX_RECONNECT_ATTEMPTS = 10
+
+# --- Topic 配置 ---
+MQTT_DEVICE_DATA_TOPIC = "device/+/data"
+MQTT_DEVICE_STATUS_TOPIC = "device/+/status"
+MQTT_DEVICE_CONTROL_TOPIC = "device/{device_id}/command"

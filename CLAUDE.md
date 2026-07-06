@@ -181,3 +181,87 @@ Supports both MySQL (`asyncmy`) and PostgreSQL (`asyncpg`). Compatibility is han
 - Test DB uses `{DATABASE_SCHEMA}_test` naming
 - `token_headers` fixture logs in as `admin / 123456` for authenticated test requests
 - Tests live alongside the domain code (e.g., `backend/app/admin/tests/`)
+
+### Response patterns (`backend/common/response/`)
+
+Every API endpoint returns one of these unified response types:
+
+- **`ResponseModel`** — generic response, no typed `data` field. Use `response_base.success(data=...)` / `response_base.fail()`.
+- **`ResponseSchemaModel[SchemaT]`** — typed response with a Pydantic schema in `data`. Use as route `response_model` or return type annotation.
+- **`ResponseBase.fast_success()`** — bypasses Pydantic validation, uses `msgspec` directly for speed. Do NOT use with `response_model` or return type annotations.
+- **`PageData[SchemaT]`** — wraps paginated results. Use with `paging_data(db, select)` and `DependsPagination` for page-number pagination, or `cursor_paging_data(db, select)` and `DependsCursorPagination` for cursor pagination.
+
+### Cache decorator (`backend/common/cache/decorator.py`)
+
+Two-tier caching (L1: in-process LRU via `cachebox`, L2: Redis) with cross-instance invalidation via Redis Pub/Sub:
+
+- **`@cached(namespace=..., key="param_name")`** — caches the return value. `key` extracts a value from the decorated function's kwargs; for complex keys use `key_builder` (a callable). On cache miss, executes the function and backfills both L1 and L2.
+- **`@cache_invalidate(namespace=..., key=...)`** — invalidates L1 and L2 after the function succeeds. Supports `atomic=True` (default) which raises if invalidation fails. Supports prefix-based invalidation when `key` resolves to the namespace itself.
+- Existing helper: `user_key_builder()` — generates a cache key scoped to the current authenticated user.
+
+### Database session dependency injection (`backend/database/db.py`)
+
+Two pre-built `Annotated` types for FastAPI `Depends`:
+
+- **`CurrentSession`** — injects `AsyncSession` via `get_db()` (no transaction)
+- **`CurrentSessionTransaction`** — injects `AsyncSession` via `get_db_transaction()` (with `session.begin()`)
+
+Use `CurrentSession` for reads, `CurrentSessionTransaction` for writes.
+
+### CRUD layer (`sqlalchemy-crud-plus`)
+
+All CRUD classes extend `CRUDPlus[ModelType]` from `sqlalchemy-crud-plus`. Key inherited methods:
+
+- `select_model(db, pk, deleted=0)` — single row by primary key
+- `select_model_by_column(db, **filters)` — single row by column filters
+- `select_models(db, **filters)` — multiple rows
+- `update_model_by_column(db, updates, **filters)` — update with filter
+- `delete_model_by_column(db, logical_deletion=True, ...)` — soft delete
+- `select_order(...)` / `select_pagination(...)` — ordered/paginated queries with `JoinConfig` for eager loading
+
+`JoinConfig(model, join_on, fill_result=True)` specifies JOINs; `fill_result=True` marks the joined model for nested serialization. Results with joins are serialized via `select_join_serialize(result, relationships=[...])` where relationships declare the nesting structure (e.g., `'User-m2o-Dept'`, `'User-m2m-Role'`).
+
+### Error handling (`backend/common/exception/errors.py`)
+
+Custom exception classes inherit from a base `BaseExceptionMixin` with `code`, `msg`, and `data` attributes. Key exception types: `TokenError`, `AuthorizationError`, `NotFoundError`, `ServerError`. The global exception handler in `exception_handler.py` catches these and returns `MsgSpecJSONResponse` with the appropriate status code.
+
+### Socket.IO (`backend/common/socketio/server.py`)
+
+Real-time communication via `python-socketio` with Redis as the message broker. Mounted at `/ws` in `register_socket_app()`. The `connect` handler authenticates via JWT (or `WS_NO_AUTH_MARKER` in dev mode) and tracks online sessions in Redis. Events are defined in `backend/common/socketio/actions.py`.
+
+### Data permission system
+
+Row-level security via `DataScope` + `DataRule` models. Enabled roles have associated data scopes, each containing data rules. Rules use template variables (`${user_id}`, `${dept_id}`, `${now}`) and target specific model columns. Configured via `DATA_PERMISSION_MODEL_EXCLUDE`, `DATA_PERMISSION_COLUMN_EXCLUDE`, and `DATA_PERMISSION_TEMPLATE_VARIABLES` in settings.
+
+### Task app (`backend/app/task/`)
+
+The `task` app manages Celery background tasks with its own three-tier structure. Key differences from `admin`:
+- **`celery.py`** — Celery app factory. Auto-discovers task packages from `backend/app/task/tasks/`. Uses `celery-aio-pool` for async task support with gevent.
+- **`database.py`** — Celery-specific database backend for result storage.
+- **`tasks/`** — task definitions (one `tasks.py` per package), beat schedule in `beat.py`.
+- **`utils/schedulers.py`** — custom `DatabaseScheduler` for persisting beat schedules to DB.
+- Has its own models (`scheduler`, `result`) and CRUD layer for task management via the API.
+
+### Plugin configuration (`plugin.toml`)
+
+Each plugin at `backend/plugin/<name>/plugin.toml` declares:
+
+```toml
+[plugin]
+summary = "描述"
+version = "0.0.1"
+depends_on = ["other_plugin"]  # optional, controls loading order
+
+[app]                           # for app-level plugins (new top-level routes)
+router = "plugin_name:api"
+
+# OR
+[app]                           # for extend-level plugins (inject into existing app)
+extend = "admin"
+
+[api.some_endpoint]             # extend-level only
+prefix = "/api-prefix"
+tags = "标签名"
+```
+
+App-level plugins provide a `backend/plugin/<name>/api/router.py` with an `APIRouter`. Extend-level plugins place route files under `backend/plugin/<name>/api/v1/<target_app>/` — they're merged into the target app's router at startup.
