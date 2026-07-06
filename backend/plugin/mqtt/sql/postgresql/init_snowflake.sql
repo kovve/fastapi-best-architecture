@@ -6,7 +6,7 @@ CREATE TABLE iot_device (
     type VARCHAR(64) NOT NULL,
     status INT NOT NULL DEFAULT 0,
     description VARCHAR(512),
-    metadata TEXT,
+    extra_data TEXT,
     last_online TIMESTAMPTZ,
     created_time TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_time TIMESTAMPTZ,
@@ -20,7 +20,7 @@ COMMENT ON COLUMN iot_device.name IS '设备名称';
 COMMENT ON COLUMN iot_device.type IS '设备类型';
 COMMENT ON COLUMN iot_device.status IS '设备状态（0: 离线, 1: 在线, 2: 异常）';
 COMMENT ON COLUMN iot_device.description IS '设备描述';
-COMMENT ON COLUMN iot_device.metadata IS '设备元数据 (JSON)';
+COMMENT ON COLUMN iot_device.extra_data IS '设备扩展数据 (JSON)';
 COMMENT ON COLUMN iot_device.last_online IS '最后在线时间';
 COMMENT ON COLUMN iot_device.deleted IS '是否已删除';
 

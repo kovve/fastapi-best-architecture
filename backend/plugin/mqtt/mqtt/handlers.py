@@ -59,8 +59,8 @@ async def handle_device_status(topic: str, payload: str, w0: str) -> None:
         return
 
     status = data.get('status', 0)
-    metadata = data.get('metadata')
+    extra_data = data.get('extra_data')
 
     from backend.plugin.mqtt.service.device_service import device_service
 
-    await device_service.handle_status_change(device_id=device_id, status=status, metadata=metadata)
+    await device_service.handle_status_change(device_id=device_id, status=status, extra_data=extra_data)

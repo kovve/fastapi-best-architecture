@@ -86,7 +86,7 @@ class CRUDDevice(CRUDPlus[Device]):
         return await self.update_model_by_column(db, obj, id=pk, deleted=0)
 
     async def update_status(
-        self, db: AsyncSession, device_id: str, status: int, metadata: dict | None = None
+        self, db: AsyncSession, device_id: str, status: int, extra_data: dict | None = None
     ) -> None:
         """
         更新设备状态
@@ -94,15 +94,15 @@ class CRUDDevice(CRUDPlus[Device]):
         :param db: 数据库会话
         :param device_id: 设备唯一标识符
         :param status: 新状态
-        :param metadata: 可选的元数据更新
+        :param extra_data: 可选的扩展数据更新
         :return:
         """
         values: dict = {
             'status': status,
             'last_online': timezone.now(),
         }
-        if metadata is not None:
-            values['metadata'] = json.dumps(metadata, ensure_ascii=False)
+        if extra_data is not None:
+            values['extra_data'] = json.dumps(extra_data, ensure_ascii=False)
         stmt = update(Device).where(Device.device_id == device_id, Device.deleted == 0).values(**values)
         await db.execute(stmt)
 

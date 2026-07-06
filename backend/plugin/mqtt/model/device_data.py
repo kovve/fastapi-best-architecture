@@ -4,11 +4,11 @@ import sqlalchemy as sa
 
 from sqlalchemy.orm import Mapped, mapped_column
 
-from backend.common.model import MappedBase, TimeZone, id_key
+from backend.common.model import DataClassBase, TimeZone, id_key
 from backend.utils.timezone import timezone
 
 
-class DeviceData(MappedBase):
+class DeviceData(DataClassBase):
     """物联网设备遥测数据表"""
 
     __tablename__ = 'iot_device_data'

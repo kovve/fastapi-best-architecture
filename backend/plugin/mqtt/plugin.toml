@@ -7,7 +7,7 @@ tags = ["other"]
 database = ["mysql", "postgresql"]
 
 [app]
-router = ["device_router", "telemetry_router", "control_router"]
+router = ["v1"]
 
 [settings]
 # --- MQTT Broker ---

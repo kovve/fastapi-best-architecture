@@ -14,7 +14,7 @@ class DeviceSchemaBase(SchemaBase):
     type: str = Field(description='设备类型')
     status: DeviceStatus = Field(default=DeviceStatus.offline, description='设备状态')
     description: str | None = Field(None, description='设备描述')
-    metadata: str | None = Field(None, description='设备元数据 (JSON)')
+    extra_data: str | None = Field(None, description='设备扩展数据 (JSON)')
 
 
 class CreateDeviceParam(DeviceSchemaBase):

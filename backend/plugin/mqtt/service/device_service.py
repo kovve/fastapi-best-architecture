@@ -97,20 +97,20 @@ class DeviceService:
             log.exception(f'[DeviceService] 处理遥测数据失败: device={device_id}, error={e}')
 
     @staticmethod
-    async def handle_status_change(device_id: str, status: int, metadata: dict | None = None) -> None:
+    async def handle_status_change(device_id: str, status: int, extra_data: dict | None = None) -> None:
         """
         处理设备状态变更 — 持久化 + 缓存更新 + 前端推送
 
         :param device_id: 设备唯一标识符
         :param status: 新状态
-        :param metadata: 可选的元数据更新
+        :param extra_data: 可选的扩展数据更新
         :return:
         """
         try:
             async with async_db_session.begin() as db:
                 device = await device_dao.get_by_device_id(db, device_id)
                 if device:
-                    await device_dao.update_status(db, device_id, status, metadata)
+                    await device_dao.update_status(db, device_id, status, extra_data)
                 else:
                     log.warning(f'[DeviceService] 未注册设备上报状态: {device_id}')
 
