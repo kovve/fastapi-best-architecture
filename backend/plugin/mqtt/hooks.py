@@ -11,6 +11,11 @@ from backend.plugin.mqtt.mqtt import handlers  # noqa: F401
 from backend.plugin.mqtt.mqtt.client import mqtt_client_manager
 
 
+def setup(app: FastAPI) -> None:
+    """插件 setup hook — 在应用注册阶段执行，用于确认插件已加载"""
+    log.info('[MQTT Plugin] 插件已加载，准备注册 lifespan hook')
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """

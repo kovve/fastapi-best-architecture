@@ -1,3 +1,16 @@
+import asyncio
+import sys
+import warnings
+
+if sys.platform == 'win32':
+    # 注意：Granian 在 Windows 上硬编码使用 ProactorEventLoop
+    # （见 granian/_loops.py build_asyncio_loop），会绕过此策略设置。
+    # 需要 add_writer() 的库（如 aiomqtt）必须在独立线程中使用
+    # 专用的 SelectorEventLoop，见 backend/plugin/mqtt/mqtt/client.py
+    with warnings.catch_warnings():
+        warnings.filterwarnings('ignore', category=DeprecationWarning)
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+
 from rich.progress import Progress, SpinnerColumn, TextColumn, TimeElapsedColumn
 from rich.text import Text
 
