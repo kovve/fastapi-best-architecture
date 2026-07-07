@@ -20,7 +20,7 @@ async def handle_device_data(topic: str, payload: str, w0: str) -> None:
     :return:
     """
     device_id = w0
-
+    log.info(f'[MQTT] 接收 topic={topic}  payload ={payload} w0 = {w0}')
     try:
         data = json.loads(payload)
     except json.JSONDecodeError:
@@ -51,7 +51,7 @@ async def handle_device_status(topic: str, payload: str, w0: str) -> None:
     :return:
     """
     device_id = w0
-
+    log.info(f'[MQTT] 接收 topic={topic}  payload ={payload} w0 = {w0}')
     try:
         data = json.loads(payload)
     except json.JSONDecodeError:
