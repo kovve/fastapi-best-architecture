@@ -1,11 +1,15 @@
 from typing import Annotated
 
+from anyio import open_file
 from fastapi import APIRouter, Depends, Path, Query
+from starlette.responses import StreamingResponse
 
 from backend.app.customer.schema.contract import CreateContractParam, GetContractDetail, UpdateContractParam
 from backend.app.customer.service.contract_service import contract_service
+from backend.common.exception import errors
 from backend.common.response.response_schema import ResponseModel, ResponseSchemaModel, response_base
 from backend.common.security.jwt import DependsJwtAuth
+from backend.core.path_conf import UPLOAD_DIR
 from backend.database.db import CurrentSession, CurrentSessionTransaction
 
 router = APIRouter()
@@ -63,3 +67,22 @@ async def delete_contract(db: CurrentSessionTransaction, pk: Annotated[int, Path
     if count > 0:
         return response_base.success()
     return response_base.fail()
+
+
+@router.get('/{pk}/download', summary='下载合同文件', dependencies=[DependsJwtAuth])
+async def download_contract(
+    db: CurrentSession, pk: Annotated[int, Path(description='合同 ID')]
+) -> StreamingResponse:
+    contract = await contract_service.get(db=db, pk=pk)
+    if not contract.file_path:
+        raise errors.NotFoundError(msg='合同文件不存在')
+    filename = contract.file_path.rsplit('/', 1)[-1]
+    file_path = UPLOAD_DIR / filename
+    if not file_path.exists():
+        raise errors.NotFoundError(msg='文件不存在')
+    file = await open_file(file_path, mode='rb')
+    return StreamingResponse(
+        file,
+        media_type='application/pdf',
+        headers={'Content-Disposition': f'attachment; filename={filename}'},
+    )

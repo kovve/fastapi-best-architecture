@@ -189,6 +189,8 @@ class Settings(BaseSettings):
     UPLOAD_IMAGE_SIZE_MAX: int = 5 * 1024 * 1024  # 5 MB
     UPLOAD_VIDEO_EXT_INCLUDE: list[str] = ['mp4', 'mov', 'avi', 'flv']
     UPLOAD_VIDEO_SIZE_MAX: int = 20 * 1024 * 1024  # 20 MB
+    UPLOAD_DOCUMENT_EXT_INCLUDE: list[str] = ['pdf', 'doc', 'docx', 'xls', 'xlsx']
+    UPLOAD_DOCUMENT_SIZE_MAX: int = 20 * 1024 * 1024  # 20 MB
 
     # 演示模式配置
     DEMO_MODE: bool = False

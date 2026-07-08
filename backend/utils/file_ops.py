@@ -40,6 +40,9 @@ def upload_file_verify(file: UploadFile) -> None:
     elif file_ext in settings.UPLOAD_VIDEO_EXT_INCLUDE:
         if file.size > settings.UPLOAD_VIDEO_SIZE_MAX:
             raise errors.RequestError(msg='视频超出最大限制，请重新选择')
+    elif file_ext in settings.UPLOAD_DOCUMENT_EXT_INCLUDE:
+        if file.size > settings.UPLOAD_DOCUMENT_SIZE_MAX:
+            raise errors.RequestError(msg='文档超出最大限制，请重新选择')
     else:
         raise errors.RequestError(msg=f'此文件格式 {file_ext} 暂不支持')
 
